@@ -117,7 +117,7 @@
 :root[data-vt-mode]::view-transition-group(vt_tt), */
 :root[data-vt-mode]::view-transition-group(vt_bgv1),
 :root[data-vt-mode]::view-transition-group(vt_bgv2),
-:root[data-vt-mode]::view-transition-group(vt_bgv3),
+/* :root[data-vt-mode]::view-transition-group(vt_bgv3), */
 :root[data-vt-mode]::view-transition-group(vt_bgv4),
 :root[data-vt-mode]::view-transition-group(vt_bgv5),
 :root[data-vt-mode]::view-transition-group(vt_bgv6){
@@ -129,7 +129,7 @@
 :root[data-vt-mode]::view-transition-old(vt_tt), */
 :root[data-vt-mode]::view-transition-old(vt_bgv1),
 :root[data-vt-mode]::view-transition-old(vt_bgv2),
-:root[data-vt-mode]::view-transition-old(vt_bgv3),
+/* :root[data-vt-mode]::view-transition-old(vt_bgv3), */
 :root[data-vt-mode]::view-transition-old(vt_bgv4),
 :root[data-vt-mode]::view-transition-old(vt_bgv5),
 :root[data-vt-mode]::view-transition-old(vt_bgv6){
@@ -142,7 +142,7 @@
 :root[data-vt-mode]::view-transition-new(vt_tt), */
 :root[data-vt-mode]::view-transition-new(vt_bgv1),
 :root[data-vt-mode]::view-transition-new(vt_bgv2),
-:root[data-vt-mode]::view-transition-new(vt_bgv3),
+/* :root[data-vt-mode]::view-transition-new(vt_bgv3), */
 :root[data-vt-mode]::view-transition-new(vt_bgv4),
 :root[data-vt-mode]::view-transition-new(vt_bgv5),
 :root[data-vt-mode]::view-transition-new(vt_bgv6){
@@ -173,8 +173,8 @@
   :root[data-vt-mode]::view-transition-new(vt_bgv1),
   :root[data-vt-mode]::view-transition-old(vt_bgv2),
   :root[data-vt-mode]::view-transition-new(vt_bgv2),
-  :root[data-vt-mode]::view-transition-old(vt_bgv3),
-  :root[data-vt-mode]::view-transition-new(vt_bgv3),
+  /* :root[data-vt-mode]::view-transition-old(vt_bgv3),
+  :root[data-vt-mode]::view-transition-new(vt_bgv3), */
   :root[data-vt-mode]::view-transition-old(vt_bgv4),
   :root[data-vt-mode]::view-transition-new(vt_bgv4),
   :root[data-vt-mode]::view-transition-old(vt_bgv5),
