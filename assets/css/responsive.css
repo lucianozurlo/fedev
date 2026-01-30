@@ -505,17 +505,17 @@
     transition: all 0.3s ease-in-out;
   }
   body.tt-ol-menu-open .logo-home.outside-menu {
-    opacity: 0;
+    opacity: 0 !important;
     transition-delay: 1s;
     transition: all 0.3s ease-in-out;
   }
     .logo-home.inside-menu {
-    opacity: 0;
+    opacity: 0 !important;
     transition-delay: 1s;
     transition: all 0.3s ease-in-out;
   }
       body.tt-ol-menu-open .logo-home.inside-menu {
-    opacity: 1
+    opacity: 1 !important;
   }
   
   
