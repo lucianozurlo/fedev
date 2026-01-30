@@ -309,6 +309,10 @@
   max-height: 100dvh;
   overflow: hidden; /* clave */
   overscroll-behavior: contain; /* evita “bounce” hacia el body */
+  padding: 80px 25px 0px;
+  gap: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .modal-simple.submmodal .content {
@@ -323,4 +327,9 @@
   justify-content: flex-start !important;
 
   padding-bottom: 40px;
+
+  width: 100%;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 341px;
 }
