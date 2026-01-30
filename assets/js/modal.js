@@ -84,6 +84,7 @@ function lockPage(modal) {
   }
 }
 
+
 function unlockPage() {
   root.classList.remove("modal-lock", "modal-open");
   document.body.classList.remove("modal-lock", "modal-open");
@@ -115,6 +116,7 @@ function unlockPage() {
 
   window.scrollTo(0, y);
 }
+
 
   function onWheel(e) {
     if (!activeModal) return;
