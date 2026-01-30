@@ -232,11 +232,17 @@
   letter-spacing: 6px;
   padding: 6px 6px 6px 12px;
   border-radius: 7px;
+  border: 1px solid transparent;
   transition: all 0.35s ease-in-out;
 }
 .modal-simple.submmodal .works-items a:hover {
   color: var(--color-fede-white);
   background-color: var(--color-fede-fv);
+}
+
+.modal-simple.submmodal .works-items a.active {
+  border: 1px solid var(--color-fede-fv);
+  pointer-events: none !important;
 }
 
 .modal-simple.submmodal a.submodal-close {
