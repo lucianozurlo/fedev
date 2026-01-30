@@ -1,14 +1,18 @@
-// modal.js — modales accesibles, slide desde arriba, scroll interno OK, sin salto de página
+// modal-full.js — full-screen, scroll interno, sin salto de página
 (function () {
   const OPEN_ATTR = "data-modal-open";
   const CLOSE_ATTR = "data-modal-close";
   const MODAL_SELECTOR = ".modal-simple";
-  const DIALOG_SELECTOR = ".modal__dialog";
+  const CONTENT_SELECTOR = ".modal__dialog > .content";
 
-  const CLOSE_MS = 420; // debe matchear tu --modal-close-ms
+  const CLOSE_MS = 420; // igual a --modal-close-ms
 
-  let lastActiveTrigger = null;
-  let scrollY = 0;
+  let activeModal = null;
+  let lastActive = null;
+  let savedScrollY = 0;
+
+  // touch control (iOS)
+  let startY = 0;
 
   const focusableSelector = [
     "a[href]",
@@ -28,127 +32,138 @@
     }
   };
 
-  const isOpen = (modal) => modal?.classList.contains("is-open");
+  function lockPage(modal) {
+    savedScrollY = window.scrollY || 0;
 
-  /* ---------------------- Scroll lock (incluye iOS) ---------------------- */
-  function lockScroll() {
-    scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    // evitar layout shift por scrollbar (desktop)
+    const sbw = window.innerWidth - document.documentElement.clientWidth;
+    if (sbw > 0) document.body.style.paddingRight = sbw + "px";
 
-    document.documentElement.classList.add("no-scroll");
-    document.body.classList.add("no-scroll");
+    document.documentElement.classList.add("modal-lock");
+    document.body.classList.add("modal-lock");
 
-    // iOS-friendly lock
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.left = "0";
-    document.body.style.right = "0";
-    document.body.style.width = "100%";
+    activeModal = modal;
+
+    // Bloquear scroll del fondo (pero permitir dentro de content)
+    document.addEventListener("wheel", onWheel, {
+      passive: false,
+      capture: true,
+    });
+    document.addEventListener("touchmove", onDocTouchMove, {
+      passive: false,
+      capture: true,
+    });
+
+    const content = modal.querySelector(CONTENT_SELECTOR);
+    if (content) {
+      content.addEventListener("touchstart", onContentTouchStart, {
+        passive: true,
+      });
+      content.addEventListener("touchmove", onContentTouchMove, {
+        passive: false,
+      });
+    }
   }
 
-  function unlockScroll() {
-    document.documentElement.classList.remove("no-scroll");
-    document.body.classList.remove("no-scroll");
+  function unlockPage() {
+    document.documentElement.classList.remove("modal-lock");
+    document.body.classList.remove("modal-lock");
+    document.body.style.paddingRight = "";
 
-    document.body.style.position = "";
-    document.body.style.top = "";
-    document.body.style.left = "";
-    document.body.style.right = "";
-    document.body.style.width = "";
+    // sacar listeners
+    document.removeEventListener("wheel", onWheel, true);
+    document.removeEventListener("touchmove", onDocTouchMove, true);
 
-    // restauración exacta
-    window.scrollTo(0, scrollY);
+    if (activeModal) {
+      const content = activeModal.querySelector(CONTENT_SELECTOR);
+      if (content) {
+        content.removeEventListener("touchstart", onContentTouchStart);
+        content.removeEventListener("touchmove", onContentTouchMove);
+      }
+    }
+
+    activeModal = null;
+
+    // volver EXACTO al scroll anterior
+    window.scrollTo(0, savedScrollY);
   }
 
-  /* -------------------------- Focus + no-scroll-jump -------------------------- */
+  function onWheel(e) {
+    if (!activeModal) return;
+
+    const content = activeModal.querySelector(CONTENT_SELECTOR);
+    if (content && content.contains(e.target)) return; // permitir scroll dentro
+    e.preventDefault(); // bloquear fondo
+  }
+
+  function onDocTouchMove(e) {
+    if (!activeModal) return;
+
+    const content = activeModal.querySelector(CONTENT_SELECTOR);
+    if (content && content.contains(e.target)) return; // permitido (el “edge” lo maneja onContentTouchMove)
+    e.preventDefault(); // bloquear fondo
+  }
+
+  function onContentTouchStart(e) {
+    startY = e.touches?.[0]?.clientY ?? 0;
+  }
+
+  // evita “rubber band” que termina scrolleando la página de atrás
+  function onContentTouchMove(e) {
+    const content = e.currentTarget;
+    const currentY = e.touches?.[0]?.clientY ?? 0;
+    const dy = currentY - startY;
+
+    const atTop = content.scrollTop <= 0;
+    const atBottom =
+      content.scrollTop + content.clientHeight >= content.scrollHeight - 1;
+
+    if ((atTop && dy > 0) || (atBottom && dy < 0)) {
+      e.preventDefault();
+    }
+  }
+
+  function getFocusable(root) {
+    return Array.from(root.querySelectorAll(focusableSelector)).filter(
+      (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
+    );
+  }
+
   function safeFocus(el) {
     if (!el?.focus) return;
-
-    // guardo el scroll actual por si el browser lo mueve al focusear
     const y = window.scrollY || 0;
-
     try {
       el.focus({ preventScroll: true });
     } catch {
       el.focus();
     }
-
-    // blindaje: vuelvo a donde estaba
     window.scrollTo(0, y);
   }
 
-  function getFocusable(modal) {
-    const dialog = modal.querySelector(DIALOG_SELECTOR) || modal;
-    return Array.from(dialog.querySelectorAll(focusableSelector)).filter(
-      (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
-    );
-  }
+  function openModal(modal, trigger) {
+    if (!modal || modal.classList.contains("is-open")) return;
 
-  function focusFirst(modal) {
-    const focusables = getFocusable(modal);
-    const preferred =
-      modal.querySelector(`[${CLOSE_ATTR}]`) ||
-      focusables[0] ||
-      (modal.querySelector(DIALOG_SELECTOR) ?? modal);
+    // cerrar otro si estuviera
+    document
+      .querySelectorAll(`${MODAL_SELECTOR}.is-open`)
+      .forEach((m) => closeModal(m, true));
 
-    if (preferred && preferred.tabIndex < 0) preferred.tabIndex = -1;
-    safeFocus(preferred);
-  }
-
-  function trapTab(e, modal) {
-    if (e.key !== "Tab") return;
-
-    const focusables = getFocusable(modal);
-    if (!focusables.length) {
-      e.preventDefault();
-      return;
-    }
-
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    const active = document.activeElement;
-
-    if (e.shiftKey && active === first) {
-      e.preventDefault();
-      safeFocus(last);
-    } else if (!e.shiftKey && active === last) {
-      e.preventDefault();
-      safeFocus(first);
-    }
-  }
-
-  function clearLonelyHash() {
-    // por si algún handler externo igual te pone "#"
-    if (location.hash === "#") {
-      try {
-        history.replaceState(null, "", location.pathname + location.search);
-      } catch {}
-    }
-  }
-
-  /* ------------------------------ Open/Close ----------------------------- */
-  function closeAnyOpen(exceptModal = null) {
-    document.querySelectorAll(`${MODAL_SELECTOR}.is-open`).forEach((m) => {
-      if (m !== exceptModal) closeModal(m);
-    });
-  }
-
-  function openModal(modal, trigger = null) {
-    if (!modal || isOpen(modal)) return;
-
-    closeAnyOpen(modal);
-    lastActiveTrigger = trigger || document.activeElement;
+    lastActive = trigger || document.activeElement;
 
     modal.setAttribute("aria-hidden", "false");
     modal.classList.remove("is-closing");
     modal.classList.add("is-open");
 
-    lockScroll();
+    lockPage(modal);
 
-    requestAnimationFrame(() => focusFirst(modal));
+    // foco adentro
+    const focusables = getFocusable(modal);
+    const close = modal.querySelector(`[${CLOSE_ATTR}]`);
+    safeFocus(close || focusables[0] || modal);
   }
 
-  function closeModal(modal) {
-    if (!modal || !isOpen(modal)) return;
+  function closeModal(modal, skipFocusRestore = false) {
+    if (!modal || !modal.classList.contains("is-open")) return;
 
     modal.classList.add("is-closing");
     modal.classList.remove("is-open");
@@ -157,22 +172,45 @@
       modal.classList.remove("is-closing");
       modal.setAttribute("aria-hidden", "true");
 
-      const stillOpen = document.querySelector(`${MODAL_SELECTOR}.is-open`);
-      if (!stillOpen) {
-        unlockScroll();
-        clearLonelyHash();
+      // desbloquear si no quedan modales
+      const still = document.querySelector(`${MODAL_SELECTOR}.is-open`);
+      if (!still) {
+        unlockPage();
 
-        // devolver foco sin mover scroll
-        safeFocus(lastActiveTrigger);
-        // y por las dudas, reafirmo scroll (algunos browsers lo mueven igual)
-        window.scrollTo(0, scrollY);
+        // por si algún script metió "#"
+        if (location.hash === "#") {
+          try {
+            history.replaceState(null, "", location.pathname + location.search);
+          } catch {}
+        }
+
+        if (!skipFocusRestore) safeFocus(lastActive);
       }
-
-      lastActiveTrigger = null;
     }, CLOSE_MS);
   }
 
-  /* ------------------------------- Listeners (CAPTURE) ----------------------------- */
+  function trapTab(e) {
+    if (!activeModal || e.key !== "Tab") return;
+
+    const focusables = getFocusable(activeModal);
+    if (!focusables.length) {
+      e.preventDefault();
+      return;
+    }
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      safeFocus(last);
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      safeFocus(first);
+    }
+  }
+
+  // CLICK CAPTURE: bloquea cualquier otro handler que agregue hash/scroll
   document.addEventListener(
     "click",
     (e) => {
@@ -180,8 +218,8 @@
       if (openBtn) {
         e.preventDefault();
         e.stopPropagation();
-        const targetSel = openBtn.getAttribute(OPEN_ATTR);
-        openModal(getModal(targetSel), openBtn);
+        const modal = getModal(openBtn.getAttribute(OPEN_ATTR));
+        openModal(modal, openBtn);
         return;
       }
 
@@ -192,19 +230,22 @@
         closeModal(closeBtn.closest(MODAL_SELECTOR));
       }
     },
-    true, // capture
+    true,
   );
 
-  document.addEventListener("keydown", (e) => {
-    const modal = document.querySelector(`${MODAL_SELECTOR}.is-open`);
-    if (!modal) return;
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (!activeModal) return;
 
-    if (e.key === "Escape") {
-      e.preventDefault();
-      closeModal(modal);
-      return;
-    }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeModal(activeModal);
+        return;
+      }
 
-    trapTab(e, modal);
-  });
+      trapTab(e);
+    },
+    true,
+  );
 })();

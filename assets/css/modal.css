@@ -1,45 +1,39 @@
-/* =========================
-   Modal: slide in desde arriba (-100%)
-   ========================= */
-
 :root{
   --modal-open-ms: 520ms;
   --modal-close-ms: 420ms;
   --modal-ease: cubic-bezier(.2,.9,.2,1);
-  --modal-radius: 18px;
+  --modal-bg: #fff;
 }
 
-/* lock scroll (desktop) */
-html.no-scroll,
-body.no-scroll{
+/* fondo bloqueado */
+html.modal-lock,
+body.modal-lock{
   overflow: hidden;
+  height: 100%;
 }
 
-/* Root modal */
+/* Root */
 .modal-simple{
   position: fixed;
   inset: 0;
   z-index: 9999;
 
-  display: grid;
-  place-items: center;
-
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 
-  /* evita “scroll chaining” hacia el body */
-  overscroll-behavior: contain;
+  /* para que no haya scroll chaining */
+  overscroll-behavior: none;
 }
 
-/* Open state */
+/* Open */
 .modal-simple.is-open{
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 
-/* Backdrop */
+/* Backdrop (opcional pero lindo) */
 .modal__backdrop{
   position: absolute;
   inset: 0;
@@ -48,93 +42,103 @@ body.no-scroll{
   transition: opacity var(--modal-open-ms) var(--modal-ease);
 }
 
-/* Backdrop visible */
-.modal-simple.is-open .modal__backdrop{
-  opacity: 1;
-}
-
-/* Dialog */
-.modal__dialog{
-  position: relative;
-  width: min(860px, calc(100vw - 32px));
-
-  /* usa viewport dinámico (mejor en mobile) */
-  max-height: calc(100dvh - 32px);
-  max-height: calc(100vh - 32px); /* fallback */
-
-  border-radius: var(--modal-radius);
-  background: #fff;
-
-  /* CLAVE para scroll interno */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  transform: translate3d(0, -110%, 0);
-  transition: transform var(--modal-open-ms) var(--modal-ease);
-  will-change: transform;
-}
-
-/* Cuando abre, baja a su lugar */
-.modal-simple.is-open .modal__dialog{
-  transform: translate3d(0, 0, 0);
-}
-
-/* Cuando cierra, vuelve hacia arriba */
-.modal-simple.is-closing .modal__dialog{
-  transform: translate3d(0, -110%, 0);
-  transition: transform var(--modal-close-ms) var(--modal-ease);
-}
-
-/* Backdrop cuando cierra */
+.modal-simple.is-open .modal__backdrop{ opacity: 1; }
 .modal-simple.is-closing .modal__backdrop{
   opacity: 0;
   transition: opacity var(--modal-close-ms) var(--modal-ease);
 }
 
-/* Layout interno típico (ajustá a tu diseño) */
-.modal__dialog header{
+/* DIALOG: full screen real */
+.modal__dialog{
+  position: absolute;
+  inset: 0;
+  background: var(--modal-bg);
+
+  /* animación desde arriba 100% */
+  transform: translate3d(0,-100%,0);
+  transition: transform var(--modal-open-ms) var(--modal-ease);
+  will-change: transform;
+
+  /* estructura interna */
+  display: flex;
+  flex-direction: column;
+}
+
+/* abre */
+.modal-simple.is-open .modal__dialog{
+  transform: translate3d(0,0,0);
+}
+
+/* cierra */
+.modal-simple.is-closing .modal__dialog{
+  transform: translate3d(0,-100%,0);
+  transition: transform var(--modal-close-ms) var(--modal-ease);
+}
+
+/* header fijo dentro del modal */
+.modal__dialog > header{
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 18px 10px 18px;
+
+  padding: 18px 18px 12px 18px;
+
+  /* si querés “sticky” visual */
+  position: sticky;
+  top: 0;
+  background: var(--modal-bg);
+  z-index: 2;
 }
 
-.modal__dialog .content{
+/* content scrolleable (CLAVE) */
+.modal__dialog > .content{
   flex: 1 1 auto;
-  min-height: 0;              /* CLAVE en flexbox para que overflow funcione */
-  overflow: auto;             /* scroll acá */
+  min-height: 0; /* CLAVE para overflow en flex */
+  overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0 18px 18px 18px;
+  padding: 0 18px 22px 18px;
+
+  overscroll-behavior: contain;
 }
 
-/* Por si tus bg-vectors se superponen y “bloquean” el scroll */
+/* si tus vectores están encima y bloquean gestos */
 .bg-vectors{
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 0;
-}
-.modal__dialog header,
-.modal__dialog .content{
-  position: relative;
   z-index: 1;
 }
-
-/* Botón close (tu clase) */
-.submodal-close{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
+.modal__dialog > header,
+.modal__dialog > .content{
+  position: relative;
+  z-index: 2;
 }
 
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce){
-  .modal__dialog,
-  .modal__backdrop{
-    transition: none !important;
+/* si querés que en desktop tenga “columna centrada” pero igual full height */
+@media (min-width: 980px){
+  .modal__dialog{
+    padding: 0 18px; /* márgenes laterales */
   }
+  .modal__dialog > header,
+  .modal__dialog > .content{
+    max-width: 920px;
+    width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .modal__dialog, .modal__backdrop{ transition: none !important; }
+}
+
+
+.modal-simple.submmodal .modal__dialog h3 {
+    font-size: 35px;
+    font-weight: 800;
+    line-height: 48px;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 5px;
 }
