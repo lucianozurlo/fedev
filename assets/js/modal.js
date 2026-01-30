@@ -1,11 +1,11 @@
-// modal.js — modales accesibles, slide desde arriba, sin dependencias
+// modal.js — modales accesibles, slide desde arriba, scroll interno OK, sin salto de página
 (function () {
   const OPEN_ATTR = "data-modal-open";
   const CLOSE_ATTR = "data-modal-close";
   const MODAL_SELECTOR = ".modal-simple";
   const DIALOG_SELECTOR = ".modal__dialog";
 
-  const CLOSE_MS = 420; // debe coincidir con --modal-close-ms (aprox)
+  const CLOSE_MS = 420; // debe matchear tu --modal-close-ms
 
   let lastActiveTrigger = null;
   let scrollY = 0;
@@ -33,10 +33,11 @@
   /* ---------------------- Scroll lock (incluye iOS) ---------------------- */
   function lockScroll() {
     scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
     document.documentElement.classList.add("no-scroll");
     document.body.classList.add("no-scroll");
 
-    // iOS-friendly: fijar body para evitar “salto”
+    // iOS-friendly lock
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.left = "0";
@@ -48,18 +49,33 @@
     document.documentElement.classList.remove("no-scroll");
     document.body.classList.remove("no-scroll");
 
-    const top = document.body.style.top;
     document.body.style.position = "";
     document.body.style.top = "";
     document.body.style.left = "";
     document.body.style.right = "";
     document.body.style.width = "";
 
-    const y = top ? Math.abs(parseInt(top, 10)) : scrollY;
-    window.scrollTo(0, y || 0);
+    // restauración exacta
+    window.scrollTo(0, scrollY);
   }
 
-  /* --------------------------- Focus management -------------------------- */
+  /* -------------------------- Focus + no-scroll-jump -------------------------- */
+  function safeFocus(el) {
+    if (!el?.focus) return;
+
+    // guardo el scroll actual por si el browser lo mueve al focusear
+    const y = window.scrollY || 0;
+
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      el.focus();
+    }
+
+    // blindaje: vuelvo a donde estaba
+    window.scrollTo(0, y);
+  }
+
   function getFocusable(modal) {
     const dialog = modal.querySelector(DIALOG_SELECTOR) || modal;
     return Array.from(dialog.querySelectorAll(focusableSelector)).filter(
@@ -74,9 +90,8 @@
       focusables[0] ||
       (modal.querySelector(DIALOG_SELECTOR) ?? modal);
 
-    // asegurar foco
     if (preferred && preferred.tabIndex < 0) preferred.tabIndex = -1;
-    preferred?.focus?.({ preventScroll: true });
+    safeFocus(preferred);
   }
 
   function trapTab(e, modal) {
@@ -94,10 +109,19 @@
 
     if (e.shiftKey && active === first) {
       e.preventDefault();
-      last.focus();
+      safeFocus(last);
     } else if (!e.shiftKey && active === last) {
       e.preventDefault();
-      first.focus();
+      safeFocus(first);
+    }
+  }
+
+  function clearLonelyHash() {
+    // por si algún handler externo igual te pone "#"
+    if (location.hash === "#") {
+      try {
+        history.replaceState(null, "", location.pathname + location.search);
+      } catch {}
     }
   }
 
@@ -120,7 +144,6 @@
 
     lockScroll();
 
-    // focus
     requestAnimationFrame(() => focusFirst(modal));
   }
 
@@ -130,39 +153,47 @@
     modal.classList.add("is-closing");
     modal.classList.remove("is-open");
 
-    // esperar animación de cierre
     window.setTimeout(() => {
       modal.classList.remove("is-closing");
       modal.setAttribute("aria-hidden", "true");
 
-      // si no queda ningún modal abierto, liberar scroll
       const stillOpen = document.querySelector(`${MODAL_SELECTOR}.is-open`);
-      if (!stillOpen) unlockScroll();
+      if (!stillOpen) {
+        unlockScroll();
+        clearLonelyHash();
 
-      // devolver foco
-      lastActiveTrigger?.focus?.({ preventScroll: true });
+        // devolver foco sin mover scroll
+        safeFocus(lastActiveTrigger);
+        // y por las dudas, reafirmo scroll (algunos browsers lo mueven igual)
+        window.scrollTo(0, scrollY);
+      }
+
       lastActiveTrigger = null;
     }, CLOSE_MS);
   }
 
-  /* ------------------------------- Listeners ----------------------------- */
-  document.addEventListener("click", (e) => {
-    const openBtn = e.target.closest(`[${OPEN_ATTR}]`);
-    if (openBtn) {
-      e.preventDefault();
-      const targetSel = openBtn.getAttribute(OPEN_ATTR);
-      const modal = getModal(targetSel);
-      openModal(modal, openBtn);
-      return;
-    }
+  /* ------------------------------- Listeners (CAPTURE) ----------------------------- */
+  document.addEventListener(
+    "click",
+    (e) => {
+      const openBtn = e.target.closest(`[${OPEN_ATTR}]`);
+      if (openBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const targetSel = openBtn.getAttribute(OPEN_ATTR);
+        openModal(getModal(targetSel), openBtn);
+        return;
+      }
 
-    const closeBtn = e.target.closest(`[${CLOSE_ATTR}]`);
-    if (closeBtn) {
-      e.preventDefault();
-      const modal = closeBtn.closest(MODAL_SELECTOR);
-      closeModal(modal);
-    }
-  });
+      const closeBtn = e.target.closest(`[${CLOSE_ATTR}]`);
+      if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal(closeBtn.closest(MODAL_SELECTOR));
+      }
+    },
+    true, // capture
+  );
 
   document.addEventListener("keydown", (e) => {
     const modal = document.querySelector(`${MODAL_SELECTOR}.is-open`);

@@ -57,15 +57,19 @@ body.no-scroll{
 .modal__dialog{
   position: relative;
   width: min(860px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+
+  /* usa viewport dinámico (mejor en mobile) */
+  max-height: calc(100dvh - 32px);
+  max-height: calc(100vh - 32px); /* fallback */
 
   border-radius: var(--modal-radius);
-
-  /* importante: scroll interno del modal */
-  overflow: hidden;
   background: #fff;
 
-  /* animación: arranca arriba del todo */
+  /* CLAVE para scroll interno */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
   transform: translate3d(0, -110%, 0);
   transition: transform var(--modal-open-ms) var(--modal-ease);
   will-change: transform;
@@ -90,21 +94,33 @@ body.no-scroll{
 
 /* Layout interno típico (ajustá a tu diseño) */
 .modal__dialog header{
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-
   padding: 18px 18px 10px 18px;
 }
 
 .modal__dialog .content{
-  padding: 0 18px 18px 18px;
-
-  /* scroll vertical dentro del modal */
-  overflow: auto;
-  max-height: calc(100vh - 32px - 62px); /* 62px aprox header */
+  flex: 1 1 auto;
+  min-height: 0;              /* CLAVE en flexbox para que overflow funcione */
+  overflow: auto;             /* scroll acá */
   -webkit-overflow-scrolling: touch;
+  padding: 0 18px 18px 18px;
+}
+
+/* Por si tus bg-vectors se superponen y “bloquean” el scroll */
+.bg-vectors{
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.modal__dialog header,
+.modal__dialog .content{
+  position: relative;
+  z-index: 1;
 }
 
 /* Botón close (tu clase) */
