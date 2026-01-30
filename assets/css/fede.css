@@ -262,6 +262,16 @@ body:not(.tt-boxed) .tt-header-inner,
 html.with-fancybox-gallery .tt-main-menu-list > li:nth-child(2) > a:last-child {
   display: flex;
 } */
+html.tt-scroll-locked {
+  overscroll-behavior: none;
+}
+.tt-ol-menu {
+  max-height: 100dvh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+
 #content-wrap {
   background-color: var(--color-fede-white);
 }

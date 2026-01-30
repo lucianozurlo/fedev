@@ -1,118 +1,68 @@
-$ (document).ready (function () {
-  // Selecciona los elementos correspondientes
-  const pageHeader = $ ('#page-header');
-  const aboutDiv = $ ('#about');
-  const workDiv = $ ('#work');
+// Scroll lock automático cuando body tiene .tt-ol-menu-open
+(() => {
+  const body = document.body;
+  const docEl = document.documentElement;
 
-  // Variable para rastrear si la clase está activa
-  let isClassAdded = false;
-  let observerActive = true; // Para rastrear si el observador está activo
+  let locked = false;
+  let scrollY = 0;
 
-  // Crea una instancia de IntersectionObserver
-  const observer = new IntersectionObserver (
-    entries => {
-      // Solo procesar si el observador está activo
-      if (!observerActive) return;
+  const getScrollbarWidth = () => window.innerWidth - docEl.clientWidth;
 
-      // Variables para almacenar la visibilidad actual de los elementos
-      let pageHeaderVisible = 0;
-      let aboutVisible = 0;
-      let workVisible = 0;
+  function lockScroll() {
+    if (locked) return;
+    locked = true;
 
-      entries.forEach (entry => {
-        const targetId = entry.target.id;
-        const intersectionRatio = entry.intersectionRatio;
+    scrollY = window.scrollY || window.pageYOffset || 0;
+    const sbw = getScrollbarWidth();
 
-        // Asigna la visibilidad según el elemento observado
-        if (targetId === 'page-header') {
-          pageHeaderVisible = intersectionRatio;
-        } else if (targetId === 'about') {
-          aboutVisible = intersectionRatio;
-        } else if (targetId === 'work') {
-          workVisible = intersectionRatio;
-        }
+    // Congela el body en la posición actual
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
 
-        // Log para verificar la visibilidad
-        console.log (`Element: #${targetId}, Visibility: ${intersectionRatio}`);
-      });
+    // Evita “jump” por desaparición de la scrollbar (desktop)
+    if (sbw > 0) body.style.paddingRight = `${sbw}px`;
 
-      // Condición mandatoria: Si el div "page-header" es visible más del 95%, no ejecutar más condiciones
-      if (pageHeaderVisible > 0.95) {
-        if (isClassAdded) {
-          $ ('body').removeClass ('psi-light-image-on');
-          isClassAdded = false;
-          console.log ('Class removed: psi-light-image-on (page-header > 95%)');
-        }
-        return; // Salir de la función si esta condición es verdadera
-      }
+    docEl.classList.add("tt-scroll-locked");
+  }
 
-      // Si "page-header" es visible 5% o menos y "about" es visible 30% o más, agregar la clase
-      if (pageHeaderVisible <= 0.05 && aboutVisible >= 0.30) {
-        if (!isClassAdded) {
-          $ ('body').addClass ('psi-light-image-on');
-          isClassAdded = true;
-          console.log (
-            'Class added: psi-light-image-on (page-header <= 5% and about >= 30%)'
-          );
-        }
-      } else if (aboutVisible <= 0.15 && workVisible >= 0.30) {
-        // Si "about" es visible 15% o menos y "work" es visible 30% o más, NO agregar la clase
-        if (isClassAdded) {
-          $ ('body').removeClass ('psi-light-image-on');
-          isClassAdded = false;
-          console.log (
-            'Class removed: psi-light-image-on (about <= 15% and work >= 30%)'
-          );
-        }
-      }
-    },
-    {
-      root: null, // Usa el viewport como raíz
-      threshold: Array.from ({length: 101}, (_, i) => i / 100), // Umbrales del 0% al 100%
-    }
-  );
+  function unlockScroll() {
+    if (!locked) return;
+    locked = false;
 
-  // Observamos los tres divs
-  observer.observe (pageHeader[0]);
-  observer.observe (aboutDiv[0]);
-  observer.observe (workDiv[0]);
+    body.style.position = "";
+    body.style.top = "";
+    body.style.left = "";
+    body.style.right = "";
+    body.style.width = "";
+    body.style.paddingRight = "";
 
-  // Comportamiento de los enlaces del menú
-  $ ('.tt-main-menu-list a').on ('click', function (event) {
-    const targetId = $ (this).attr ('href'); // Obtener el ID del elemento destino
+    docEl.classList.remove("tt-scroll-locked");
 
-    // Evitar el comportamiento predeterminado del enlace
-    event.preventDefault ();
+    // Vuelve al scroll exacto
+    window.scrollTo(0, scrollY);
+  }
 
-    // Desactivar el observer por 4 segundos
-    observerActive = false;
+  function sync() {
+    if (body.classList.contains("tt-ol-menu-open")) lockScroll();
+    else unlockScroll();
+  }
 
-    // Manejar la clase según el elemento al que se hace clic
-    setTimeout (() => {
-      if (targetId === '#about') {
-        // Agregar la clase solo si no está activa
-        if (!isClassAdded) {
-          $ ('body').addClass ('psi-light-image-on');
-          isClassAdded = true;
-          console.log (
-            'Class added after 1 second: psi-light-image-on (clicked on About)'
-          );
-        }
-      } else {
-        // Eliminar la clase si se hace clic en otros enlaces
-        if (isClassAdded) {
-          $ ('body').removeClass ('psi-light-image-on');
-          isClassAdded = false;
-          console.log (
-            'Class removed after 1 second: psi-light-image-on (clicked on other links)'
-          );
-        }
-      }
+  // Inicial
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", sync, { once: true });
+  } else {
+    sync();
+  }
 
-      // Reactivar el observer después de 4 segundos
-      setTimeout (() => {
-        observerActive = true;
-      }, 1000); // Reactivar el observer después de 4 segundos
-    }, 1000); // Retraso de 1 segundo para agregar/remover clase
+  // Detecta cuando cambia la clase del body
+  new MutationObserver(sync).observe(body, {
+    attributes: true,
+    attributeFilter: ["class"],
   });
-});
+
+  // Por si vuelve desde bfcache (Safari/Chrome)
+  window.addEventListener("pageshow", sync);
+})();
