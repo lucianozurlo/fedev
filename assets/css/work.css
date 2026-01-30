@@ -1,5 +1,8 @@
 /** BG VECTORS **/
-.bg-vectors div:nth-child(2) {
+.bg-vectors {
+  display: none;
+}
+/* .bg-vectors div:nth-child(2) {
   transform: translateY(8%);
 }
 .bg-vectors div:nth-child(3) {
@@ -13,7 +16,8 @@
 }
 .bg-vectors div:nth-child(6) {
   transform: translateY(63.3%);
-}
+} */
+
 /** WORK PROJECTS **/
 body.tt-boxed.work .tt-section:last-child {
   margin-top: 40px;
