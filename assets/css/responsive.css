@@ -515,7 +515,7 @@
     transition: all 0.3s ease-in-out;
   }
   body.tt-ol-menu-open .logo-home.inside-menu {
-    opacity: 1 !important;
+    opacity: 1;
   }
 
   #logo-header,
