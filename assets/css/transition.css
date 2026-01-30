@@ -113,8 +113,8 @@
 #bg-vectors-6 { view-transition-name: vt_bgv6; }
 
 /* ---------- sin animación default del grupo ---------- */
-:root[data-vt-mode]::view-transition-group(vt_logo),
-:root[data-vt-mode]::view-transition-group(vt_tt),
+/* :root[data-vt-mode]::view-transition-group(vt_logo),
+:root[data-vt-mode]::view-transition-group(vt_tt), */
 :root[data-vt-mode]::view-transition-group(vt_bgv1),
 :root[data-vt-mode]::view-transition-group(vt_bgv2),
 :root[data-vt-mode]::view-transition-group(vt_bgv3),
@@ -125,8 +125,8 @@
 }
 
 /* ---------- OLD (sale) ---------- */
-:root[data-vt-mode]::view-transition-old(vt_logo),
-:root[data-vt-mode]::view-transition-old(vt_tt),
+/* :root[data-vt-mode]::view-transition-old(vt_logo),
+:root[data-vt-mode]::view-transition-old(vt_tt), */
 :root[data-vt-mode]::view-transition-old(vt_bgv1),
 :root[data-vt-mode]::view-transition-old(vt_bgv2),
 :root[data-vt-mode]::view-transition-old(vt_bgv3),
@@ -138,8 +138,8 @@
 }
 
 /* ---------- NEW (entra) ---------- */
-:root[data-vt-mode]::view-transition-new(vt_logo),
-:root[data-vt-mode]::view-transition-new(vt_tt),
+/* :root[data-vt-mode]::view-transition-new(vt_logo),
+:root[data-vt-mode]::view-transition-new(vt_tt), */
 :root[data-vt-mode]::view-transition-new(vt_bgv1),
 :root[data-vt-mode]::view-transition-new(vt_bgv2),
 :root[data-vt-mode]::view-transition-new(vt_bgv3),
@@ -165,10 +165,10 @@
 }
 
 @media (prefers-reduced-motion: reduce){
-  :root[data-vt-mode]::view-transition-old(vt_logo),
+  /* :root[data-vt-mode]::view-transition-old(vt_logo),
   :root[data-vt-mode]::view-transition-new(vt_logo),
   :root[data-vt-mode]::view-transition-old(vt_tt),
-  :root[data-vt-mode]::view-transition-new(vt_tt),
+  :root[data-vt-mode]::view-transition-new(vt_tt), */
   :root[data-vt-mode]::view-transition-old(vt_bgv1),
   :root[data-vt-mode]::view-transition-new(vt_bgv1),
   :root[data-vt-mode]::view-transition-old(vt_bgv2),
