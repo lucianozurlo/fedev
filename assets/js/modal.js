@@ -1,321 +1,179 @@
-// modal.js — modal accesible sin dependencias
-// - Scroll lock robusto (iOS safe)
-// - Lee timings de CSS vars: --modal-close-ms / --modal-open-ms
-// - Backdrop click, ESC, focus trap, restore focus
-// - (opcional) integración con Fancybox: data-clear-gallery / data-gallery-target
-
+// modal.js — modales accesibles, slide desde arriba, sin dependencias
 (function () {
   const OPEN_ATTR = "data-modal-open";
   const CLOSE_ATTR = "data-modal-close";
-  const CLEAR_GALLERY_ATTR = "data-clear-gallery";
-  const TARGET_ATTR = "data-gallery-target"; // abre fancybox group por slug (opcional)
-
   const MODAL_SELECTOR = ".modal-simple";
   const DIALOG_SELECTOR = ".modal__dialog";
-  const BACKDROP_SELECTOR = ".modal__backdrop";
+
+  const CLOSE_MS = 420; // debe coincidir con --modal-close-ms (aprox)
 
   let lastActiveTrigger = null;
+  let scrollY = 0;
 
-  /* ------------------------ shared scroll lock ------------------------ */
-  const ScrollLock =
-    window.__ScrollLock ||
-    (window.__ScrollLock = (function () {
-      let locks = 0;
-      let scrollY = 0;
-      let savedPaddingRight = "";
+  const focusableSelector = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    "[tabindex]:not([tabindex='-1'])",
+  ].join(",");
 
-      function getScrollbarWidth() {
-        return Math.max(
-          0,
-          window.innerWidth - document.documentElement.clientWidth,
-        );
-      }
-
-      function lock(className = "is-locked") {
-        locks += 1;
-        if (locks > 1) return;
-
-        scrollY = window.scrollY || window.pageYOffset || 0;
-
-        const sbw = getScrollbarWidth();
-        savedPaddingRight = document.body.style.paddingRight || "";
-
-        document.documentElement.classList.add(className);
-        document.body.classList.add(className);
-
-        // Evita “jump”: body fixed + top negativo
-        document.body.style.position = "fixed";
-        document.body.style.top = `-${scrollY}px`;
-        document.body.style.left = "0";
-        document.body.style.right = "0";
-        document.body.style.width = "100%";
-
-        if (sbw) document.body.style.paddingRight = `${sbw}px`;
-      }
-
-      function unlock(className = "is-locked") {
-        if (locks === 0) return;
-        locks -= 1;
-        if (locks > 0) return;
-
-        document.documentElement.classList.remove(className);
-        document.body.classList.remove(className);
-
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
-        document.body.style.width = "";
-
-        document.body.style.paddingRight = savedPaddingRight;
-
-        window.scrollTo(0, scrollY);
-      }
-
-      return { lock, unlock };
-    })());
-
-  /* ----------------------------- helpers ----------------------------- */
-
-  const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
-  const qs = (sel, root = document) => root.querySelector(sel);
-
-  const getOpenModals = () =>
-    qsa(MODAL_SELECTOR).filter((m) => m.classList.contains("is-open"));
-
-  function msFromCssVar(el, varName, fallbackMs) {
+  const getModal = (sel) => {
+    if (!sel) return null;
     try {
-      const raw = getComputedStyle(el).getPropertyValue(varName).trim();
-      if (!raw) return fallbackMs;
-      if (raw.endsWith("ms")) return parseFloat(raw);
-      if (raw.endsWith("s")) return parseFloat(raw) * 1000;
-      const n = parseFloat(raw);
-      return Number.isFinite(n) ? n : fallbackMs;
+      return document.querySelector(sel);
     } catch {
-      return fallbackMs;
+      return null;
     }
+  };
+
+  const isOpen = (modal) => modal?.classList.contains("is-open");
+
+  /* ---------------------- Scroll lock (incluye iOS) ---------------------- */
+  function lockScroll() {
+    scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.documentElement.classList.add("no-scroll");
+    document.body.classList.add("no-scroll");
+
+    // iOS-friendly: fijar body para evitar “salto”
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.width = "100%";
   }
 
-  function getCloseMs(modal) {
-    return msFromCssVar(modal, "--modal-close-ms", 420);
+  function unlockScroll() {
+    document.documentElement.classList.remove("no-scroll");
+    document.body.classList.remove("no-scroll");
+
+    const top = document.body.style.top;
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.left = "";
+    document.body.style.right = "";
+    document.body.style.width = "";
+
+    const y = top ? Math.abs(parseInt(top, 10)) : scrollY;
+    window.scrollTo(0, y || 0);
   }
 
-  function isReducedMotion() {
-    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-  }
-
-  function getFocusable(container) {
-    const selectors = [
-      "a[href]",
-      "button:not([disabled])",
-      'input:not([disabled]):not([type="hidden"])',
-      "select:not([disabled])",
-      "textarea:not([disabled])",
-      '[tabindex]:not([tabindex="-1"])',
-    ].join(",");
-    return qsa(selectors, container).filter(
-      (el) =>
-        !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length),
+  /* --------------------------- Focus management -------------------------- */
+  function getFocusable(modal) {
+    const dialog = modal.querySelector(DIALOG_SELECTOR) || modal;
+    return Array.from(dialog.querySelectorAll(focusableSelector)).filter(
+      (el) => !el.hasAttribute("disabled") && el.tabIndex !== -1,
     );
   }
 
-  function trapFocus(modal, onClose) {
-    function onKeyDown(e) {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-        return;
-      }
+  function focusFirst(modal) {
+    const focusables = getFocusable(modal);
+    const preferred =
+      modal.querySelector(`[${CLOSE_ATTR}]`) ||
+      focusables[0] ||
+      (modal.querySelector(DIALOG_SELECTOR) ?? modal);
 
-      if (e.key !== "Tab") return;
-
-      const focusables = getFocusable(modal);
-      if (!focusables.length) return;
-
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    modal.__trapHandler = onKeyDown;
-    document.addEventListener("keydown", onKeyDown, true);
+    // asegurar foco
+    if (preferred && preferred.tabIndex < 0) preferred.tabIndex = -1;
+    preferred?.focus?.({ preventScroll: true });
   }
 
-  function releaseFocusTrap(modal) {
-    if (modal.__trapHandler) {
-      document.removeEventListener("keydown", modal.__trapHandler, true);
-      modal.__trapHandler = null;
+  function trapTab(e, modal) {
+    if (e.key !== "Tab") return;
+
+    const focusables = getFocusable(modal);
+    if (!focusables.length) {
+      e.preventDefault();
+      return;
+    }
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
     }
   }
 
-  // Fancybox helpers (opcional)
-  const getFB = () =>
-    window.Fancybox?.getInstance?.() || window.Fancybox?.getInstance?.();
-
-  function clearUrlHash() {
-    try {
-      const url = location.pathname + location.search;
-      history.replaceState(null, "", url);
-    } catch {
-      if (location.hash) location.hash = "";
-    }
-  }
-
-  function closeFancyboxAndClearHash() {
-    const fb = getFB();
-    try {
-      fb?.close?.();
-    } catch {}
-    clearUrlHash();
-    document.documentElement.classList.remove("with-fancybox-gallery");
-  }
-
-  function openFancyboxGroup(slug) {
-    // Busca anchors con data-fancybox="slug" y arma items para Fancybox.show()
-    if (!slug || !window.Fancybox?.show) return;
-
-    const nodes = qsa(`[data-fancybox="${slug}"]`);
-    if (!nodes.length) return;
-
-    const items = nodes.map((a) => ({
-      src: a.dataset.src || a.getAttribute("href"),
-      type: a.dataset.type || "image",
-      caption: a.dataset.caption || a.getAttribute("data-caption") || "",
-    }));
-
-    document.documentElement.classList.add("with-fancybox-gallery");
-    window.Fancybox.show(items, {
-      dragToClose: true,
-      animated: true,
-      showClass: "f-fadeIn",
-      hideClass: "f-fadeOut",
+  /* ------------------------------ Open/Close ----------------------------- */
+  function closeAnyOpen(exceptModal = null) {
+    document.querySelectorAll(`${MODAL_SELECTOR}.is-open`).forEach((m) => {
+      if (m !== exceptModal) closeModal(m);
     });
   }
 
-  /* ----------------------------- core ----------------------------- */
+  function openModal(modal, trigger = null) {
+    if (!modal || isOpen(modal)) return;
 
-  function openModal(modal, triggerEl) {
-    if (!modal || modal.classList.contains("is-open")) return;
-
-    // Cerrar otros abiertos (stack simple)
-    getOpenModals().forEach((m) => closeModal(m, { restoreFocus: false }));
-
-    lastActiveTrigger = triggerEl || document.activeElement;
+    closeAnyOpen(modal);
+    lastActiveTrigger = trigger || document.activeElement;
 
     modal.setAttribute("aria-hidden", "false");
     modal.classList.remove("is-closing");
     modal.classList.add("is-open");
 
-    // lock scroll global (no depende del wrapper)
-    ScrollLock.lock("modal-open");
+    lockScroll();
 
-    // focus trap
-    trapFocus(modal, () => closeModal(modal));
-
-    // foco inicial
-    const focusables = getFocusable(modal);
-    if (focusables.length) {
-      focusables[0].focus({ preventScroll: true });
-    } else {
-      // fallback: focus al dialog si no hay focuseables
-      const dialog = qs(DIALOG_SELECTOR, modal);
-      dialog?.setAttribute("tabindex", "-1");
-      dialog?.focus({ preventScroll: true });
-    }
+    // focus
+    requestAnimationFrame(() => focusFirst(modal));
   }
 
-  function closeModal(modal, opts = {}) {
-    const { restoreFocus = true } = opts;
-    if (!modal || !modal.classList.contains("is-open")) return;
+  function closeModal(modal) {
+    if (!modal || !isOpen(modal)) return;
 
-    const closeMs = isReducedMotion() ? 0 : getCloseMs(modal);
-
-    modal.classList.remove("is-open");
     modal.classList.add("is-closing");
+    modal.classList.remove("is-open");
 
-    releaseFocusTrap(modal);
-
+    // esperar animación de cierre
     window.setTimeout(() => {
       modal.classList.remove("is-closing");
       modal.setAttribute("aria-hidden", "true");
 
-      ScrollLock.unlock("modal-open");
+      // si no queda ningún modal abierto, liberar scroll
+      const stillOpen = document.querySelector(`${MODAL_SELECTOR}.is-open`);
+      if (!stillOpen) unlockScroll();
 
-      if (
-        restoreFocus &&
-        lastActiveTrigger &&
-        typeof lastActiveTrigger.focus === "function"
-      ) {
-        lastActiveTrigger.focus({ preventScroll: true });
-      }
-    }, closeMs);
+      // devolver foco
+      lastActiveTrigger?.focus?.({ preventScroll: true });
+      lastActiveTrigger = null;
+    }, CLOSE_MS);
   }
 
-  /* --------------------------- event wiring -------------------------- */
-
-  // Open triggers
+  /* ------------------------------- Listeners ----------------------------- */
   document.addEventListener("click", (e) => {
-    const trigger = e.target.closest(`[${OPEN_ATTR}]`);
-    if (!trigger) return;
-
-    const target = trigger.getAttribute(OPEN_ATTR);
-    if (!target) return;
-
-    const modal = qs(target);
-    if (!modal) return;
-
-    e.preventDefault();
-
-    // Si te piden limpiar galería
-    if (trigger.hasAttribute(CLEAR_GALLERY_ATTR)) {
-      closeFancyboxAndClearHash();
-    }
-
-    // Si te piden abrir fancybox group en vez de modal
-    const fbTarget = trigger.getAttribute(TARGET_ATTR);
-    if (fbTarget) {
-      openFancyboxGroup(fbTarget);
+    const openBtn = e.target.closest(`[${OPEN_ATTR}]`);
+    if (openBtn) {
+      e.preventDefault();
+      const targetSel = openBtn.getAttribute(OPEN_ATTR);
+      const modal = getModal(targetSel);
+      openModal(modal, openBtn);
       return;
     }
 
-    openModal(modal, trigger);
-  });
-
-  // Close triggers + backdrop click
-  document.addEventListener("click", (e) => {
-    // Close button
     const closeBtn = e.target.closest(`[${CLOSE_ATTR}]`);
     if (closeBtn) {
+      e.preventDefault();
       const modal = closeBtn.closest(MODAL_SELECTOR);
-      if (!modal) return;
+      closeModal(modal);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    const modal = document.querySelector(`${MODAL_SELECTOR}.is-open`);
+    if (!modal) return;
+
+    if (e.key === "Escape") {
       e.preventDefault();
       closeModal(modal);
       return;
     }
 
-    // Backdrop / click fuera del dialog
-    const modal = e.target.closest(MODAL_SELECTOR);
-    if (!modal || !modal.classList.contains("is-open")) return;
-
-    const dialog = qs(DIALOG_SELECTOR, modal);
-    const backdrop = qs(BACKDROP_SELECTOR, modal);
-
-    // Si clickeó el backdrop o afuera del dialog => cerrar
-    if (e.target === backdrop || (dialog && !dialog.contains(e.target))) {
-      e.preventDefault();
-      closeModal(modal);
-    }
-  });
-
-  // Seguridad: si algo quedó abierto al navegar (VT), cerralo
-  window.addEventListener("pageshow", () => {
-    getOpenModals().forEach((m) => closeModal(m, { restoreFocus: false }));
+    trapTab(e, modal);
   });
 })();
