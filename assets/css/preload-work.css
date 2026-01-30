@@ -10,7 +10,7 @@ html.is-preloading body {
 
 html.is-loaded body {
   opacity: 1;
-  transition: opacity 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 /* Overlay del preloader: SOLO fondo */
@@ -21,7 +21,7 @@ html.is-loaded body {
   background: var(--color-fede-white, #f8f8f8);
   opacity: 1;
   pointer-events: all;
-  transition: opacity 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 #preloader.is-done {
