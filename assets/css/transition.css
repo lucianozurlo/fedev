@@ -114,7 +114,7 @@
 
 /* ---------- sin animación default del grupo ---------- */
 /* :root[data-vt-mode]::view-transition-group(vt_logo),
-:root[data-vt-mode]::view-transition-group(vt_tt),
+:root[data-vt-mode]::view-transition-group(vt_tt), */
 :root[data-vt-mode]::view-transition-group(vt_bgv1),
 :root[data-vt-mode]::view-transition-group(vt_bgv2),
 :root[data-vt-mode]::view-transition-group(vt_bgv3),
@@ -122,11 +122,11 @@
 :root[data-vt-mode]::view-transition-group(vt_bgv5),
 :root[data-vt-mode]::view-transition-group(vt_bgv6){
   animation: none !important;
-} */
+}
 
 /* ---------- OLD (sale) ---------- */
 /* :root[data-vt-mode]::view-transition-old(vt_logo),
-:root[data-vt-mode]::view-transition-old(vt_tt),
+:root[data-vt-mode]::view-transition-old(vt_tt), */
 :root[data-vt-mode]::view-transition-old(vt_bgv1),
 :root[data-vt-mode]::view-transition-old(vt_bgv2),
 :root[data-vt-mode]::view-transition-old(vt_bgv3),
@@ -135,11 +135,11 @@
 :root[data-vt-mode]::view-transition-old(vt_bgv6){
   animation: vt-el-out var(--fade-dur) ease both;
   mix-blend-mode: normal;
-} */
+}
 
 /* ---------- NEW (entra) ---------- */
 /* :root[data-vt-mode]::view-transition-new(vt_logo),
-:root[data-vt-mode]::view-transition-new(vt_tt),
+:root[data-vt-mode]::view-transition-new(vt_tt), */
 :root[data-vt-mode]::view-transition-new(vt_bgv1),
 :root[data-vt-mode]::view-transition-new(vt_bgv2),
 :root[data-vt-mode]::view-transition-new(vt_bgv3),
@@ -148,7 +148,7 @@
 :root[data-vt-mode]::view-transition-new(vt_bgv6){
   animation: vt-el-in var(--fade-dur) ease both;
   mix-blend-mode: normal;
-} */
+}
 
 /* 0%..40%: 1->0, 40%..100%: queda 0 */
 @keyframes vt-el-out{
@@ -164,12 +164,12 @@
   100% { opacity: 1; }
 }
 
-  /* @media (prefers-reduced-motion: reduce){
-:root[data-vt-mode]::view-transition-old(vt_logo),
+@media (prefers-reduced-motion: reduce){
+  /* :root[data-vt-mode]::view-transition-old(vt_logo),
   :root[data-vt-mode]::view-transition-new(vt_logo),
   :root[data-vt-mode]::view-transition-old(vt_tt),
-  :root[data-vt-mode]::view-transition-new(vt_tt),
-:root[data-vt-mode]::view-transition-old(vt_bgv1),
+  :root[data-vt-mode]::view-transition-new(vt_tt), */
+  :root[data-vt-mode]::view-transition-old(vt_bgv1),
   :root[data-vt-mode]::view-transition-new(vt_bgv1),
   :root[data-vt-mode]::view-transition-old(vt_bgv2),
   :root[data-vt-mode]::view-transition-new(vt_bgv2),
@@ -183,4 +183,4 @@
   :root[data-vt-mode]::view-transition-new(vt_bgv6){
     animation: none !important;
   }
-} */
+}
