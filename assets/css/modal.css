@@ -20,7 +20,6 @@
 .modal-full .bg-vectors {
   z-index: -1;
 }
-
 .modal-item {
   display: flex;
   flex-direction: row;
@@ -46,7 +45,6 @@
   color: var(--color-fede-fv-gray);
   margin-bottom: 0;
 }
-
 .modal-full a.close,
 .modal-simple a.close {
   width: 568px;
@@ -83,13 +81,11 @@
   opacity: 0;
   transition: opacity 0.4s ease;
 }
-
 .modal-simple .content {
   display: flex;
   flex-direction: column;
   gap: 36px;
 }
-
 .modal-simple .modal__dialog {
   position: relative;
   display: flex;
@@ -106,7 +102,6 @@
 .modal-open {
   overflow: hidden;
 }
-
 .modal__backdrop {
   position: absolute;
   inset: 0;
@@ -116,7 +111,6 @@
   opacity: 0;
   transition: opacity var(--modal-fade-ms) ease;
 }
-
 .modal-simple.is-open {
   pointer-events: auto;
   opacity: 1;
@@ -127,7 +121,6 @@
 .modal-simple.is-open .modal__dialog {
   animation: modalDropBounce var(--modal-close-ms) ease both;
 }
-
 .modal-simple.is-closing {
   pointer-events: none;
   opacity: 0;
@@ -188,7 +181,6 @@
 .modal-simple.submmodal .modal__backdrop {
   background: transparent !important;
 }
-
 .modal-simple.submmodal .modal__dialog {
   padding: 60px 60px 120px;
   width: 100%;
@@ -199,7 +191,6 @@
   gap: 95px;
   background: #ffffffee;
 }
-
 .modal-simple.submmodal .modal__dialog h3 {
   font-size: 35px;
   font-weight: 800;
@@ -208,12 +199,10 @@
   text-transform: uppercase;
   margin-bottom: 5px;
 }
-
 .modal-simple.submmodal .bg-vectors {
   margin-top: 26px;
   z-index: -1;
 }
-
 .modal-simple.submmodal .works-items {
   width: 100%;
   max-width: 1320px;
@@ -222,7 +211,6 @@
   justify-items: center;
   justify-content: center;
 }
-
 .modal-simple.submmodal .works-items a {
   color: var(--color-fede-fv);
   background-color: transparent;
@@ -239,12 +227,10 @@
   color: var(--color-fede-white);
   background-color: var(--color-fede-fv);
 }
-
 .modal-simple.submmodal .works-items a.active {
   border: 1px solid var(--color-fede-fv);
   pointer-events: none !important;
 }
-
 .modal-simple.submmodal a.submodal-close {
   position: absolute;
   top: 74px;
@@ -257,7 +243,6 @@
 .modal-simple.submmodal a:hover.submodal-close {
   opacity: 1;
 }
-
 .modal-simple.submmodal .content {
   width: 100%;
   height: 100%;
@@ -309,7 +294,6 @@
   align-items: stretch;
   justify-items: stretch;
 }
-
 .modal-simple.submmodal .modal__dialog {
   height: 100dvh;
   max-height: 100dvh;
@@ -320,7 +304,6 @@
   display: flex;
   align-items: center;
 }
-
 .modal-simple.submmodal .content {
   flex: 1 1 auto;
   min-height: 0; /* CLAVE en flex para que overflow funcione */
@@ -339,3 +322,35 @@
   gap: 40px;
   max-width: 341px;
 } */
+
+/* ==========================================
+   SUBMODAL full-screen: scroll dentro de .content
+   ========================================== */
+.modal-simple.submmodal{
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.modal-simple.submmodal .modal__dialog{
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;              /* clave */
+  overscroll-behavior: contain;  /* evita "pasar" el scroll al body */
+}
+
+/* el scroll vive acá */
+.modal-simple.submmodal .content{
+  flex: 1 1 auto;
+  min-height: 0;                 /* clave para overflow en flex */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+
+  /* si querés que arranque centrado, poné center;
+     pero para contenidos largos es mejor start */
+  justify-content: flex-start;
+  align-items: center;
+
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+  width: 100%;
+}

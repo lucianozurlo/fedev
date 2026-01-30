@@ -4,7 +4,20 @@
   const MODAL_SELECTOR = ".modal-simple";
   const CONTENT_SELECTOR = ".modal__dialog > .content";
 
-  const CLOSE_MS = 420; // igual a --modal-close-ms
+const root = document.documentElement;
+
+const readMsVar = (name, fallback) => {
+  const raw = getComputedStyle(root).getPropertyValue(name).trim();
+  if (!raw) return fallback;
+  if (raw.endsWith("ms")) return parseFloat(raw) || fallback;
+  if (raw.endsWith("s")) return parseFloat(raw) * 1000 || fallback;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+// Lee el timing real desde CSS (modal.css)
+const CLOSE_MS = readMsVar("--modal-close-ms", 420);
+
 
   let activeModal = null;
   let lastActive = null;
@@ -31,61 +44,77 @@
     }
   };
 
-  function lockPage(modal) {
-    savedScrollY = window.scrollY || 0;
+function lockPage(modal) {
+  savedScrollY = window.scrollY || 0;
 
-    // evitar layout shift por scrollbar (desktop)
-    const sbw = window.innerWidth - document.documentElement.clientWidth;
-    if (sbw > 0) document.body.style.paddingRight = sbw + "px";
+  const sbw = window.innerWidth - document.documentElement.clientWidth;
+  if (sbw > 0) document.body.style.paddingRight = sbw + "px";
 
-    document.documentElement.classList.add("modal-lock");
-    document.body.classList.add("modal-lock");
+  // ✅ clases para CSS y para transition.js
+  root.classList.add("modal-lock", "modal-open");
+  document.body.classList.add("modal-lock", "modal-open");
 
-    activeModal = modal;
+  // ✅ lock sólido (evita cualquier salto / rubber band iOS)
+  document.body.style.position = "fixed";
+  document.body.style.top = `-${savedScrollY}px`;
+  document.body.style.left = "0";
+  document.body.style.right = "0";
+  document.body.style.width = "100%";
 
-    // Bloquear scroll del fondo (pero permitir dentro de content)
-    document.addEventListener("wheel", onWheel, {
-      passive: false,
-      capture: true,
+  activeModal = modal;
+
+  // tus listeners (podés dejarlos como “cinturón y tirantes”)
+  document.addEventListener("wheel", onWheel, {
+    passive: false,
+    capture: true,
+  });
+  document.addEventListener("touchmove", onDocTouchMove, {
+    passive: false,
+    capture: true,
+  });
+
+  const content = modal.querySelector(CONTENT_SELECTOR);
+  if (content) {
+    content.addEventListener("touchstart", onContentTouchStart, {
+      passive: true,
     });
-    document.addEventListener("touchmove", onDocTouchMove, {
+    content.addEventListener("touchmove", onContentTouchMove, {
       passive: false,
-      capture: true,
     });
+  }
+}
 
-    const content = modal.querySelector(CONTENT_SELECTOR);
+function unlockPage() {
+  root.classList.remove("modal-lock", "modal-open");
+  document.body.classList.remove("modal-lock", "modal-open");
+
+  document.body.style.paddingRight = "";
+
+  // sacar listeners
+  document.removeEventListener("wheel", onWheel, true);
+  document.removeEventListener("touchmove", onDocTouchMove, true);
+
+  if (activeModal) {
+    const content = activeModal.querySelector(CONTENT_SELECTOR);
     if (content) {
-      content.addEventListener("touchstart", onContentTouchStart, {
-        passive: true,
-      });
-      content.addEventListener("touchmove", onContentTouchMove, {
-        passive: false,
-      });
+      content.removeEventListener("touchstart", onContentTouchStart);
+      content.removeEventListener("touchmove", onContentTouchMove);
     }
   }
 
-  function unlockPage() {
-    document.documentElement.classList.remove("modal-lock");
-    document.body.classList.remove("modal-lock");
-    document.body.style.paddingRight = "";
+  activeModal = null;
 
-    // sacar listeners
-    document.removeEventListener("wheel", onWheel, true);
-    document.removeEventListener("touchmove", onDocTouchMove, true);
+  // ✅ restaurar scroll desde el fixed lock
+  const y = savedScrollY;
 
-    if (activeModal) {
-      const content = activeModal.querySelector(CONTENT_SELECTOR);
-      if (content) {
-        content.removeEventListener("touchstart", onContentTouchStart);
-        content.removeEventListener("touchmove", onContentTouchMove);
-      }
-    }
+  document.body.style.position = "";
+  document.body.style.top = "";
+  document.body.style.left = "";
+  document.body.style.right = "";
+  document.body.style.width = "";
 
-    activeModal = null;
-
-    // volver EXACTO al scroll anterior
-    window.scrollTo(0, savedScrollY);
-  }
+  window.scrollTo(0, y);
+}
 
   function onWheel(e) {
     if (!activeModal) return;

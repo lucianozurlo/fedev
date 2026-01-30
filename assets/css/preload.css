@@ -89,7 +89,6 @@ body.no-scroll {
   );
   will-change: transform, opacity;
 }
-
 .pl-inner {
   width: min(520px, 86vw);
   text-align: center;
@@ -106,7 +105,6 @@ body.no-scroll {
   --space-top: clamp(26px, 3.2vw, 38px);
   --space-bottom: clamp(20px, 2.6vw, 32px);
 }
-
 .pl-top,
 .pl-bottom {
   font-family:
@@ -125,11 +123,9 @@ body.no-scroll {
   letter-spacing: 0.5em; /* 50% aprox */
   text-transform: uppercase;
 }
-
 .pl-top {
   margin-bottom: var(--space-top);
 }
-
 .pl-percent {
   font-family:
     "PP Telegraf",

@@ -6,7 +6,6 @@
   overflow: hidden;
   padding: 50px 0;
 }
-
 .stage {
   position: relative;
   width: 100%;
@@ -15,7 +14,6 @@
   perspective: 1200px;
   transform-style: preserve-3d;
 }
-
 .verbatim {
   position: absolute;
   top: 50%;
@@ -41,7 +39,6 @@
   -ms-user-select: none;
   user-select: none;
 }
-
 .verbatim p {
   font-size: 16px;
   line-height: 22px;
@@ -58,7 +55,6 @@
   font-weight: 700;
   margin-right: 5px;
 }
-
 .verbatim img {
   display: block;
   width: 88px;
@@ -68,7 +64,6 @@
   margin: 10px auto 0;
   border-radius: 999px;
 }
-
 .hit {
   position: absolute;
   top: 0;

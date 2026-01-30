@@ -15,7 +15,6 @@ body:not(.tt-boxed) .tt-section-inner.tt-wrap .tt-grid.ttgr-gap-40 .tt-grid-top,
   padding-left: 40px;
   padding-right: 40px;
 }
-
 .tt-grid.ttgr-gap-40 .ttgr-item-inner {
   margin: 0 20px 40px 20px;
 }
@@ -63,13 +62,11 @@ body:not(.tt-boxed) .tt-section-inner.tt-wrap .tt-grid.ttgr-gap-40 .tt-grid-top,
 #gallery img {
   position: relative;
 }
-
 .photo-tile {
   overflow: hidden;
   isolation: isolate;
   background: #fff;
 }
-
 .photo-tile::before {
   content: "";
   position: absolute;
@@ -79,7 +76,6 @@ body:not(.tt-boxed) .tt-section-inner.tt-wrap .tt-grid.ttgr-gap-40 .tt-grid-top,
   background: var(--color-fede-orange);
   transition: background 0.7s cubic-bezier(0.34, 1.5, 0.9, 1);
 }
-
 .photo-tile img {
   position: relative;
   z-index: 2;

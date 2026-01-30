@@ -44,6 +44,9 @@
       const a = e.target.closest("a[href]");
       if (!a) return;
 
+      // si el link es para abrir/cerrar modal, NO tocar VT
+      if (a.closest("[data-modal-open], [data-modal-close]")) return;
+
       // ignorar anchors
       const hrefAttr = a.getAttribute("href");
       if (!hrefAttr || hrefAttr === "#" || hrefAttr.startsWith("#")) return;
@@ -200,7 +203,10 @@
     function modalIsOpen() {
       return (
         root.classList.contains("modal-open") ||
-        document.body.classList.contains("modal-open")
+        root.classList.contains("modal-lock") ||
+        document.body.classList.contains("modal-open") ||
+        document.body.classList.contains("modal-lock") ||
+        !!document.querySelector(".modal-simple.is-open")
       );
     }
 

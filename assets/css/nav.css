@@ -24,13 +24,11 @@ body {
 a {
   color: inherit;
 }
-
 .container {
   width: min(1100px, 92vw);
   margin: 0 auto;
   padding: 22px 0 44px;
 }
-
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -38,7 +36,6 @@ a {
   gap: 12px;
   margin-bottom: 18px;
 }
-
 .badge {
   font-size: 12px;
   opacity: 0.85;
@@ -46,7 +43,6 @@ a {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.14);
 }
-
 .btn {
   display: inline-flex;
   align-items: center;
@@ -60,7 +56,6 @@ a {
 .btn:active {
   transform: translateY(1px);
 }
-
 .hint {
   margin: 10px 0 0;
   opacity: 0.85;
@@ -84,7 +79,6 @@ a {
     grid-template-columns: 1fr;
   }
 }
-
 .card {
   display: flex;
   flex-direction: column;
@@ -99,20 +93,17 @@ a {
 .card:hover {
   transform: translateY(-2px);
 }
-
 .card h2 {
   margin: 0;
   font-size: 16px;
   letter-spacing: 0.2px;
 }
-
 .card p {
   margin: 0;
   opacity: 0.82;
   font-weight: 500;
   font-size: 13px;
 }
-
 .media {
   border-radius: 14px;
   overflow: hidden;
@@ -133,50 +124,42 @@ a {
     grid-template-columns: 1fr;
   }
 }
-
 .hero {
   padding: 14px;
   border-radius: 18px;
   background: rgba(0, 0, 0, 0.22);
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
-
 .hero .media {
   aspect-ratio: 16 / 10;
   border-radius: 18px;
 }
-
 .hero h1 {
   margin: 12px 0 6px;
   font-size: 28px;
   letter-spacing: 0.2px;
 }
-
 .hero p {
   margin: 0;
   opacity: 0.86;
   font-weight: 500;
 }
-
 .side {
   padding: 14px;
   border-radius: 18px;
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 .side h3 {
   margin: 0 0 10px;
   font-size: 14px;
   opacity: 0.9;
 }
-
 .side .nav {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
-
 .small {
   font-size: 12px;
   opacity: 0.82;

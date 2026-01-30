@@ -14,6 +14,7 @@
   const cleanup = () => {
     preloader.remove();
     root.classList.remove("no-scroll");
+    document.body.classList.remove("no-scroll");
   };
 
   const finish = () => {
